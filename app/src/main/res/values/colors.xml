@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Modern Palette -->
+    <color name="colorPrimary">#4F46E5</color>
+    <color name="colorPrimaryVariant">#4338CA</color>
+    <color name="colorSecondary">#F97316</color>
+
+    <color name="surface_background">#F8FAFC</color>
+    <color name="text_primary">#1E293B</color>
+    <color name="text_secondary">#64748B</color>
+
+    <color name="slate_50">#F8FAFC</color>
+    <color name="slate_100">#F1F5F9</color>
+    <color name="slate_200">#E2E8F0</color>
+
+    <!-- Category Colors -->
+    <color name="cat_fiction_bg">#EEF2FF</color>
+    <color name="cat_fiction_icon">#6366F1</color>
+    <color name="cat_selfhelp_bg">#ECFDF5</color>
+    <color name="cat_selfhelp_icon">#10B981</color>
+    <color name="cat_business_bg">#FFF7ED</color>
+    <color name="cat_business_icon">#F97316</color>
+    <color name="cat_kids_bg">#FEF9C3</color>
+    <color name="cat_kids_icon">#EAB308</color>
+    <color name="cat_mystery_bg">#F5F3FF</color>
+    <color name="cat_mystery_icon">#8B5CF6</color>
+    <color name="cat_tech_bg">#F0FDFA</color>
+    <color name="cat_tech_icon">#0D9488</color>
+
+    <color name="chip_background_selected">#4F46E5</color>
+    <color name="chip_background_unselected">#F1F5F9</color>
+
+    <color name="chip_text_selected">#FFFFFF</color>
+    <color name="chip_text_unselected">#64748B</color>
+</resources>
