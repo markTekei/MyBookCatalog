@@ -1,10 +1,15 @@
 package com.example.mybookcatalog;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,6 +36,7 @@ public class CatalogFragment extends Fragment {
     private RecyclerView rvCategories;
     private TextView textViewStats;
     private View emptyState;
+    private EditText editTextSearch;
     
     private String currentSearchQuery = "";
     private String selectedCategory = "All";
@@ -48,13 +54,15 @@ public class CatalogFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_catalog, container, false);
 
-        if (getArguments() != null) {
-            selectedCategory = getArguments().getString("selected_category", "All");
-        }
-
         // Adjust for system bars
         view.setPadding(0, getStatusBarHeight(), 0, 0);
 
+        // Recover state from arguments if arriving from home
+        if (getArguments() != null && getArguments().containsKey("selected_category")) {
+            selectedCategory = getArguments().getString("selected_category", "All");
+        }
+
+        // Initialize UI components
         rvBooks = view.findViewById(R.id.recyclerView);
         rvBooks.setLayoutManager(new GridLayoutManager(getContext(), 2));
 
@@ -63,6 +71,7 @@ public class CatalogFragment extends Fragment {
 
         textViewStats = view.findViewById(R.id.textViewStats);
         emptyState = view.findViewById(R.id.emptyState);
+        editTextSearch = view.findViewById(R.id.editTextSearch);
 
         MaterialButton buttonAddBook = view.findViewById(R.id.buttonAddBook);
         buttonAddBook.setOnClickListener(v -> {
@@ -70,31 +79,18 @@ public class CatalogFragment extends Fragment {
             startActivity(intent);
         });
 
-        // Make search icon clickable
-        view.findViewById(R.id.buttonSearch).setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Search activated. Please type in the search bar (coming soon)", Toast.LENGTH_SHORT).show();
-        });
+        // Initialize Data and Adapters
+        loadInitialData();
+        setupCategoryList();
+        setupSearchLogic(view);
 
-        loadData();
-        setupCategories();
-        
-        if (!selectedCategory.equals("All")) {
-            applyFilters();
-        }
+        // Perform initial filtering based on navigation arguments
+        applyFilters();
 
         return view;
     }
 
-    private int getStatusBarHeight() {
-        int result = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
-    }
-
-    private void loadData() {
+    private void loadInitialData() {
         allBooks = BookRepository.getInstance().getAllBooks();
         filteredBooks = new ArrayList<>(allBooks);
         
@@ -104,28 +100,25 @@ public class CatalogFragment extends Fragment {
             startActivity(intent);
         });
         rvBooks.setAdapter(bookAdapter);
-        updateStats();
     }
 
-    private void setupCategories() {
+    private void setupCategoryList() {
         List<CategoryAdapter.CategoryInfo> categoryInfos = new ArrayList<>();
         
-        // Add "All"
         categoryInfos.add(new CategoryAdapter.CategoryInfo("All", allBooks.size(), 
                 R.drawable.ic_book, R.color.slate_100, R.color.text_secondary));
         
-        // Categories matching the home page
         categoryInfos.add(new CategoryAdapter.CategoryInfo("Fiction", getCount("Fiction"), 
                 R.drawable.ic_book, R.color.cat_fiction_bg, R.color.cat_fiction_icon));
         
+        categoryInfos.add(new CategoryAdapter.CategoryInfo("Kids", getCount("Kids"), 
+                R.drawable.ic_book, R.color.cat_kids_bg, R.color.cat_kids_icon));
+
         categoryInfos.add(new CategoryAdapter.CategoryInfo("Self Help", getCount("Self Help"), 
                 R.drawable.ic_customers, R.color.cat_selfhelp_bg, R.color.cat_selfhelp_icon));
         
         categoryInfos.add(new CategoryAdapter.CategoryInfo("Business", getCount("Business"), 
                 R.drawable.ic_inventory, R.color.cat_business_bg, R.color.cat_business_icon));
-
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Kids", getCount("Kids"), 
-                R.drawable.ic_book, R.color.cat_kids_bg, R.color.cat_kids_icon));
 
         categoryInfos.add(new CategoryAdapter.CategoryInfo("Mystery", getCount("Mystery"), 
                 R.drawable.ic_book, R.color.cat_mystery_bg, R.color.cat_mystery_icon));
@@ -139,28 +132,57 @@ public class CatalogFragment extends Fragment {
         });
         rvCategories.setAdapter(categoryAdapter);
         
-        // Ensure the correct category is highlighted
+        // Highlight the category passed from Home
         categoryAdapter.setSelectedCategory(selectedCategory);
+    }
+
+    private void setupSearchLogic(View root) {
+        editTextSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                currentSearchQuery = s.toString();
+                applyFilters();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Search icon interaction
+        View searchIcon = root.findViewById(R.id.buttonSearch);
+        if (searchIcon != null) {
+            searchIcon.setOnClickListener(v -> {
+                editTextSearch.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.showSoftInput(editTextSearch, InputMethodManager.SHOW_IMPLICIT);
+            });
+        }
     }
 
     private int getCount(String category) {
         int count = 0;
         for (Book book : allBooks) {
-            if (book.getCategory().equals(category)) count++;
+            if (book.getCategory().equalsIgnoreCase(category)) count++;
         }
         return count;
     }
 
     private void applyFilters() {
+        if (allBooks == null || bookAdapter == null) return;
+
         filteredBooks.clear();
         String query = currentSearchQuery.toLowerCase(Locale.US).trim();
 
         for (Book book : allBooks) {
-            boolean matchesSearch = book.getTitle().toLowerCase(Locale.US).contains(query) ||
+            boolean matchesSearch = query.isEmpty() || 
+                                  book.getTitle().toLowerCase(Locale.US).contains(query) ||
                                   book.getAuthor().toLowerCase(Locale.US).contains(query);
             
-            boolean matchesCategory = selectedCategory.equals("All") || 
-                                     book.getCategory().equals(selectedCategory);
+            boolean matchesCategory = selectedCategory.equalsIgnoreCase("All") || 
+                                     book.getCategory().equalsIgnoreCase(selectedCategory);
 
             if (matchesSearch && matchesCategory) {
                 filteredBooks.add(book);
@@ -168,7 +190,7 @@ public class CatalogFragment extends Fragment {
         }
 
         bookAdapter.notifyDataSetChanged();
-        updateStats();
+        updateStatsText();
         
         if (filteredBooks.isEmpty()) {
             emptyState.setVisibility(View.VISIBLE);
@@ -179,8 +201,17 @@ public class CatalogFragment extends Fragment {
         }
     }
 
-    private void updateStats() {
-        String stats = String.format(Locale.US, "%d books", filteredBooks.size());
+    private void updateStatsText() {
+        String stats = String.format(Locale.US, "%d books in %s", filteredBooks.size(), selectedCategory);
         textViewStats.setText(stats);
+    }
+
+    private int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
     }
 }

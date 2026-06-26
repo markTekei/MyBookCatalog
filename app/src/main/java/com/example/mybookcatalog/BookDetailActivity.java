@@ -1,15 +1,18 @@
 package com.example.mybookcatalog;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.material.button.MaterialButton;
+
+import java.util.Locale;
 
 public class BookDetailActivity extends AppCompatActivity {
 
@@ -39,7 +42,6 @@ public class BookDetailActivity extends AppCompatActivity {
         
         TextView tvDescription = findViewById(R.id.textViewDetailDescription);
         MaterialButton buttonRead = findViewById(R.id.buttonRead);
-        MaterialButton buttonAddToCart = findViewById(R.id.buttonAddToCart);
 
         Book book = (Book) getIntent().getSerializableExtra("book");
 
@@ -51,7 +53,12 @@ public class BookDetailActivity extends AppCompatActivity {
             tvGenre.setText(book.getCategory());
             tvTitle.setText(book.getTitle());
             tvAuthor.setText(String.format("by %s", book.getAuthor()));
-            tvPrice.setText(String.format(java.util.Locale.US, "KSh %.0f", book.getRetailPrice()));
+            
+            // Hide the price field as requested
+            if (tvPrice != null) {
+                tvPrice.setVisibility(View.GONE);
+            }
+
             ratingBar.setRating((float) book.getRating());
 
             tvYear.setText(String.valueOf(book.getPublicationYear()));
@@ -61,13 +68,10 @@ public class BookDetailActivity extends AppCompatActivity {
 
             tvDescription.setText(book.getDescription());
 
-            buttonAddToCart.setOnClickListener(v -> {
-                BookRepository.getInstance().addToCart(book);
-                Toast.makeText(this, book.getTitle() + " added to cart!", Toast.LENGTH_SHORT).show();
-            });
-
             buttonRead.setOnClickListener(v -> {
-                Toast.makeText(this, "Opening preview for " + book.getTitle(), Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(BookDetailActivity.this, ReaderActivity.class);
+                intent.putExtra("book", book);
+                startActivity(intent);
             });
         }
     }

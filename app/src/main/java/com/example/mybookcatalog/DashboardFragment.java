@@ -27,12 +27,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 public class DashboardFragment extends Fragment {
 
-    private TextView tvCartBadge;
     private EditText etSearch;
     private LinearLayout featuredBooksContainer;
     private View hsvCategories;
@@ -48,8 +48,6 @@ public class DashboardFragment extends Fragment {
     private TextView tvSeeAllNew;
     private TextView tvSeeAllCategories;
     
-    private static final int FEATURED_INITIAL_COUNT = 3;
-    private static final int NEW_ARRIVALS_INITIAL_COUNT = 1;
     private OnBackPressedCallback onBackPressedCallback;
 
     @Override
@@ -71,7 +69,6 @@ public class DashboardFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_dashboard, container, false);
 
         allBooks = BookRepository.getInstance().getAllBooks();
-        tvCartBadge = view.findViewById(R.id.tvCartBadge);
         etSearch = view.findViewById(R.id.etSearch);
         featuredBooksContainer = view.findViewById(R.id.featuredBooksContainer);
         hsvCategories = view.findViewById(R.id.hsvCategories);
@@ -83,6 +80,9 @@ public class DashboardFragment extends Fragment {
         tvSeeAllNew = view.findViewById(R.id.tvSeeAllNew);
         tvSeeAllCategories = view.findViewById(R.id.tvSeeAllCategories);
         
+        // Re-enable "See all" for New Arrivals but it will show all books only when clicked
+        tvSeeAllNew.setVisibility(View.VISIBLE);
+
         BottomNavigationView bottomNav = getActivity().findViewById(R.id.bottom_navigation);
 
         view.findViewById(R.id.btnMenu).setOnClickListener(this::showHeaderMenu);
@@ -91,9 +91,7 @@ public class DashboardFragment extends Fragment {
             InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT);
         });
-        view.findViewById(R.id.btnCart).setOnClickListener(v -> {
-            if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_cart);
-        });
+        
         view.findViewById(R.id.ivProfileAvatar).setOnClickListener(v -> {
             if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_profile);
         });
@@ -129,7 +127,6 @@ public class DashboardFragment extends Fragment {
 
         setupFeaturedBooks();
         setupNewArrivals();
-        updateCartBadge();
         updateCategoryCounts(view);
 
         return view;
@@ -195,7 +192,7 @@ public class DashboardFragment extends Fragment {
 
     private void expandNewArrivalsSection() {
         newArrivalsList.clear();
-        newArrivalsList.addAll(allBooks);
+        newArrivalsList.addAll(allBooks); // Show all products when clicked
         newArrivalsAdapter.notifyDataSetChanged();
         tvSeeAllNew.setVisibility(View.GONE);
         onBackPressedCallback.setEnabled(true);
@@ -211,18 +208,41 @@ public class DashboardFragment extends Fragment {
         tvSeeAllFeatured.setVisibility(View.VISIBLE);
         
         newArrivalsList.clear();
-        for (int i = 0; i < Math.min(NEW_ARRIVALS_INITIAL_COUNT, allBooks.size()); i++) {
-            newArrivalsList.add(allBooks.get(i));
-        }
+        newArrivalsList.addAll(getFeaturedNewArrivals());
         newArrivalsAdapter.notifyDataSetChanged();
         tvSeeAllNew.setVisibility(View.VISIBLE);
         
         onBackPressedCallback.setEnabled(false);
     }
 
+    private List<Book> getFeaturedNewArrivals() {
+        List<Book> result = new ArrayList<>();
+        // Select exactly two books per category with outstanding covers for "New Arrivals"
+        List<String> outstandingTitles = Arrays.asList(
+            "milk and honey", "The Alchemist",         // Fiction
+            "The Adventures of Sherlock Holmes", "The Silent Patient", // Mystery
+            "The Pragmatic Programmer", "Clean Code",         // Technology
+            "Zero to One", "The Intelligent Investor",        // Business
+            "The Cat in the Hat", "The Very Hungry Caterpillar", // Kids
+            "Ego is the Enemy", "Atomic Habits"        // Self Help
+        );
+
+        for (String title : outstandingTitles) {
+            for (Book book : allBooks) {
+                if (book.getTitle().equalsIgnoreCase(title)) {
+                    result.add(book);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
     private void filterBooks(String query) {
         List<Book> filtered = new ArrayList<>();
-        for (Book book : allBooks) {
+        // Only search/filter within the "New Arrivals" subset as per request
+        List<Book> sourceList = getFeaturedNewArrivals();
+        for (Book book : sourceList) {
             if (book.getTitle().toLowerCase().contains(query.toLowerCase()) || 
                 book.getAuthor().toLowerCase().contains(query.toLowerCase())) {
                 filtered.add(book);
@@ -233,7 +253,6 @@ public class DashboardFragment extends Fragment {
         newArrivalsAdapter.notifyDataSetChanged();
         
         if (!query.isEmpty()) {
-            tvSeeAllNew.setVisibility(View.GONE);
             onBackPressedCallback.setEnabled(true);
         } else {
             collapseAllSections();
@@ -242,28 +261,39 @@ public class DashboardFragment extends Fragment {
 
     private void setupFeaturedBooks() {
         featuredBooksContainer.removeAllViews();
-        List<Book> initialFeatured = new ArrayList<>();
-        for (int i = 0; i < Math.min(FEATURED_INITIAL_COUNT, allBooks.size()); i++) {
-            initialFeatured.add(allBooks.get(i));
+        
+        // Default only one image shown: "goodbye kiss"
+        Book tempBook = null;
+        for (Book book : allBooks) {
+            if (book.getTitle().equalsIgnoreCase("goodbye kiss")) {
+                tempBook = book;
+                break;
+            }
         }
         
-        LayoutInflater inflater = LayoutInflater.from(getContext());
-        for (Book book : initialFeatured) {
+        if (tempBook == null && !allBooks.isEmpty()) {
+            tempBook = allBooks.get(0);
+        }
+
+        final Book goodbyeKiss = tempBook;
+
+        if (goodbyeKiss != null) {
+            LayoutInflater inflater = LayoutInflater.from(getContext());
             View bookView = inflater.inflate(R.layout.item_book, featuredBooksContainer, false);
             ViewGroup.LayoutParams lp = bookView.getLayoutParams();
             lp.width = (int) (160 * getResources().getDisplayMetrics().density);
             bookView.setLayoutParams(lp);
 
-            ((TextView) bookView.findViewById(R.id.textViewTitle)).setText(book.getTitle());
-            ((TextView) bookView.findViewById(R.id.textViewAuthor)).setText(book.getAuthor());
-            ((TextView) bookView.findViewById(R.id.textViewCategoryTag)).setText(book.getCategory());
+            ((TextView) bookView.findViewById(R.id.textViewTitle)).setText(goodbyeKiss.getTitle());
+            ((TextView) bookView.findViewById(R.id.textViewAuthor)).setText(goodbyeKiss.getAuthor());
+            ((TextView) bookView.findViewById(R.id.textViewCategoryTag)).setText(goodbyeKiss.getCategory());
             
             ImageView ivCover = bookView.findViewById(R.id.imageViewCover);
-            if (book.getCoverImageRes() != 0) {
-                ivCover.setImageResource(book.getCoverImageRes());
+            if (goodbyeKiss.getCoverImageRes() != 0) {
+                ivCover.setImageResource(goodbyeKiss.getCoverImageRes());
             }
 
-            bookView.setOnClickListener(v -> openBookDetail(book));
+            bookView.setOnClickListener(v -> openBookDetail(goodbyeKiss));
             featuredBooksContainer.addView(bookView);
         }
     }
@@ -271,9 +301,7 @@ public class DashboardFragment extends Fragment {
     private void setupNewArrivals() {
         rvNewArrivals.setLayoutManager(new LinearLayoutManager(getContext()));
         newArrivalsList = new ArrayList<>();
-        for (int i = 0; i < Math.min(NEW_ARRIVALS_INITIAL_COUNT, allBooks.size()); i++) {
-            newArrivalsList.add(allBooks.get(i));
-        }
+        newArrivalsList.addAll(getFeaturedNewArrivals());
         newArrivalsAdapter = new BookAdapter(newArrivalsList, this::openBookDetail);
         rvNewArrivals.setAdapter(newArrivalsAdapter);
         rvNewArrivals.setNestedScrollingEnabled(false);
@@ -302,20 +330,9 @@ public class DashboardFragment extends Fragment {
         popup.show();
     }
 
-    private void updateCartBadge() {
-        List<Book> cartItems = BookRepository.getInstance().getCartItems();
-        if (cartItems != null && !cartItems.isEmpty()) {
-            tvCartBadge.setText(String.valueOf(cartItems.size()));
-            tvCartBadge.setVisibility(View.VISIBLE);
-        } else {
-            tvCartBadge.setVisibility(View.GONE);
-        }
-    }
-
     @Override
     public void onResume() {
         super.onResume();
-        updateCartBadge();
     }
 
     private void showToast(String message) {

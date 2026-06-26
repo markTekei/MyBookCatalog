@@ -88,14 +88,19 @@
             android:src="@android:drawable/ic_menu_search"
             app:tint="#64748B" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="Discover Categories"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+        <EditText
+            android:id="@+id/editTextSearch"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/bg_search_rounded"
+            android:hint="Search books or authors..."
+            android:inputType="text"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textSize="14sp"
+            android:textColor="#0F172A"
+            android:textColorHint="#94A3B8"/>
     </LinearLayout>
 
     <!-- Categories RecyclerView -->

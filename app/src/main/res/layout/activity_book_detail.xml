@@ -131,19 +131,19 @@
 
                     <TextView
                         android:id="@+id/textViewDetailPrice"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:textColor="@color/colorPrimary"
-                        android:textSize="20sp"
+                        android:layout_marginTop="8dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp"
                         android:textStyle="bold"
-                        tools:text="KSh 850" />
+                        tools:text="KSh 0" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="In Stock"
+                        android:text="Available"
                         android:textColor="#10B981"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -155,26 +155,14 @@
                         android:orientation="vertical">
 
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/buttonAddToCart"
+                            android:id="@+id/buttonRead"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:text="Add to Cart"
+                            android:text="Read Preview"
                             android:textAllCaps="false"
                             android:textSize="14sp"
                             android:textStyle="bold"
-                            app:backgroundTint="@color/colorSecondary"
-                            app:cornerRadius="12dp"
-                            app:icon="@drawable/ic_orders" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/buttonRead"
-                            style="@style/Widget.Material3.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginTop="8dp"
-                            android:text="Read Preview"
-                            android:textAllCaps="false"
-                            android:textColor="@color/colorPrimary"
+                            app:backgroundTint="@color/colorPrimary"
                             app:cornerRadius="12dp"
                             app:icon="@drawable/ic_book" />
                     </LinearLayout>
