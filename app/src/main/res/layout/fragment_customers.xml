@@ -30,8 +30,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                android:src="@android:drawable/ic_menu_gallery"
-                app:tint="@color/slate_200" />
+                android:src="@android:drawable/ic_menu_gallery" />
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
@@ -40,7 +39,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="16dp"
-            android:text="John Doe"
+            android:text="@string/user_name"
             android:textColor="@color/text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -50,7 +49,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="john.doe@example.com"
+            android:text="@string/user_email"
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
 

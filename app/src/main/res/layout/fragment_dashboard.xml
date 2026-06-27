@@ -63,7 +63,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="24dp"
-                android:text="Hello, Reader 👋"
+                android:text="Hello, MARK TEKEI 👋"
                 android:textColor="@color/white"
                 android:textSize="24sp"
                 android:textStyle="bold"
@@ -177,176 +177,12 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <!-- Fiction Category -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/catFiction"
-                    android:layout_width="120dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="12dp"
-                    app:cardBackgroundColor="@color/cat_fiction_bg"
-                    app:cardCornerRadius="16dp"
-                    app:strokeWidth="0dp"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_book"
-                            app:tint="@color/cat_fiction_icon" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Fiction"
-                            android:textColor="@color/text_primary"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvFictionCount"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0 Books"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="10sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Kids Category -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/catKids"
-                    android:layout_width="120dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="12dp"
-                    app:cardBackgroundColor="@color/cat_kids_bg"
-                    app:cardCornerRadius="16dp"
-                    app:strokeWidth="0dp"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_book"
-                            app:tint="@color/cat_kids_icon" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Kids"
-                            android:textColor="@color/text_primary"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvKidsCount"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0 Books"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="10sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Self Help Category -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/catSelfHelp"
-                    android:layout_width="120dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="12dp"
-                    app:cardBackgroundColor="@color/cat_selfhelp_bg"
-                    app:cardCornerRadius="16dp"
-                    app:strokeWidth="0dp"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_customers"
-                            app:tint="@color/cat_selfhelp_icon" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Self Help"
-                            android:textColor="@color/text_primary"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvSelfHelpCount"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0 Books"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="10sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Business Category -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/catBusiness"
-                    android:layout_width="120dp"
-                    android:layout_height="wrap_content"
-                    app:cardBackgroundColor="@color/cat_business_bg"
-                    app:cardCornerRadius="16dp"
-                    app:strokeWidth="0dp"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_inventory"
-                            app:tint="@color/cat_business_icon" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Business"
-                            android:textColor="@color/text_primary"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvBusinessCount"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0 Books"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="10sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                <include layout="@layout/item_category" android:id="@+id/cardFiction" />
+                <include layout="@layout/item_category" android:id="@+id/cardMystery" />
+                <include layout="@layout/item_category" android:id="@+id/cardTech" />
+                <include layout="@layout/item_category" android:id="@+id/cardKids" />
+                <include layout="@layout/item_category" android:id="@+id/cardSelfHelp" />
+                <include layout="@layout/item_category" android:id="@+id/cardBusiness" />
 
             </LinearLayout>
         </HorizontalScrollView>
@@ -360,7 +196,7 @@
             android:clipToPadding="false"
             android:visibility="gone" />
 
-        <!-- Featured Books Section -->
+        <!-- Featured Books Section (Slide Show) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -369,53 +205,43 @@
             android:paddingHorizontal="20dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="Featured Books"
                 android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvSeeAllFeatured"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="See all"
-                android:textColor="@color/colorPrimary"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground" />
         </LinearLayout>
 
-        <HorizontalScrollView
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/hsvFeatured"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:clipToPadding="false"
-            android:paddingHorizontal="20dp"
-            android:scrollbars="none">
+            android:layout_marginTop="16dp">
 
-            <LinearLayout
-                android:id="@+id/featuredBooksContainer"
-                android:layout_width="wrap_content"
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/viewPagerFeatured"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingHorizontal="40dp"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayoutIndicator"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <!-- Book Cards will be added here -->
-            </LinearLayout>
-        </HorizontalScrollView>
+                android:layout_marginTop="8dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintTop_toBottomOf="@id/viewPagerFeatured"
+                app:tabBackground="@drawable/dot_selector"
+                app:tabGravity="center"
+                app:tabIndicatorHeight="0dp"
+                app:tabMaxWidth="12dp"
+                app:tabRippleColor="@null" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvFeaturedExpanded"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:paddingHorizontal="12dp"
-            android:clipToPadding="false"
-            android:visibility="gone" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- New Arrivals Section -->
         <LinearLayout

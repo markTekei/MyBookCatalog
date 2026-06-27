@@ -2,7 +2,11 @@ package com.example.mybookcatalog;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -19,12 +23,18 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.CompositePageTransformer;
+import androidx.viewpager2.widget.MarginPageTransformer;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,21 +44,42 @@ import java.util.Locale;
 public class DashboardFragment extends Fragment {
 
     private EditText etSearch;
-    private LinearLayout featuredBooksContainer;
+    private ViewPager2 viewPagerFeatured;
+    private TabLayout tabLayoutIndicator;
     private View hsvCategories;
     private RecyclerView rvCategoriesExpanded;
     private View hsvFeatured;
-    private RecyclerView rvFeaturedExpanded;
     private RecyclerView rvNewArrivals;
     private BookAdapter newArrivalsAdapter;
     private List<Book> allBooks;
     private List<Book> newArrivalsList;
+    private List<Book> featuredBooks;
     
-    private TextView tvSeeAllFeatured;
     private TextView tvSeeAllNew;
     private TextView tvSeeAllCategories;
     
+    private ImageView ivProfileAvatar;
+    private TextView tvGreeting;
+    
     private OnBackPressedCallback onBackPressedCallback;
+    
+    // Slower, more modernized slideshow speed (15 seconds per book)
+    private static final long SLIDE_DELAY = 15000; 
+    
+    private Handler slideHandler = new Handler(Looper.getMainLooper());
+    private Runnable sliderRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (viewPagerFeatured != null && featuredBooks != null && !featuredBooks.isEmpty()) {
+                // Guaranteed one-by-one sequential slide
+                int nextItem = viewPagerFeatured.getCurrentItem() + 1;
+                viewPagerFeatured.setCurrentItem(nextItem, true);
+            }
+        }
+    };
+
+    private static final String PREFS_NAME = "ProfilePrefs";
+    private static final String KEY_PROFILE_URI = "profile_uri";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,37 +101,39 @@ public class DashboardFragment extends Fragment {
 
         allBooks = BookRepository.getInstance().getAllBooks();
         etSearch = view.findViewById(R.id.etSearch);
-        featuredBooksContainer = view.findViewById(R.id.featuredBooksContainer);
+        viewPagerFeatured = view.findViewById(R.id.viewPagerFeatured);
+        tabLayoutIndicator = view.findViewById(R.id.tabLayoutIndicator);
         hsvCategories = view.findViewById(R.id.hsvCategories);
         rvCategoriesExpanded = view.findViewById(R.id.rvCategoriesExpanded);
         hsvFeatured = view.findViewById(R.id.hsvFeatured);
-        rvFeaturedExpanded = view.findViewById(R.id.rvFeaturedExpanded);
         rvNewArrivals = view.findViewById(R.id.rvNewArrivals);
-        tvSeeAllFeatured = view.findViewById(R.id.tvSeeAllFeatured);
         tvSeeAllNew = view.findViewById(R.id.tvSeeAllNew);
         tvSeeAllCategories = view.findViewById(R.id.tvSeeAllCategories);
+        ivProfileAvatar = view.findViewById(R.id.ivProfileAvatar);
+        tvGreeting = view.findViewById(R.id.tvGreeting);
         
-        // Re-enable "See all" for New Arrivals but it will show all books only when clicked
+        if (tvGreeting != null) {
+            tvGreeting.setText(getString(R.string.greeting_format, getString(R.string.user_name)));
+        }
+
         tvSeeAllNew.setVisibility(View.VISIBLE);
 
-        BottomNavigationView bottomNav = getActivity().findViewById(R.id.bottom_navigation);
+        BottomNavigationView bottomNav = getActivity() != null ? getActivity().findViewById(R.id.bottom_navigation) : null;
 
         view.findViewById(R.id.btnMenu).setOnClickListener(this::showHeaderMenu);
         view.findViewById(R.id.btnSearch).setOnClickListener(v -> {
             etSearch.requestFocus();
-            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT);
+            if (getActivity() != null) {
+                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT);
+            }
         });
         
-        view.findViewById(R.id.ivProfileAvatar).setOnClickListener(v -> {
-            if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_profile);
-        });
-
-        // Setup Category Clicks to navigate to Catalog tab
-        view.findViewById(R.id.catFiction).setOnClickListener(v -> openCategoryInCatalog("Fiction"));
-        view.findViewById(R.id.catKids).setOnClickListener(v -> openCategoryInCatalog("Kids"));
-        view.findViewById(R.id.catSelfHelp).setOnClickListener(v -> openCategoryInCatalog("Self Help"));
-        view.findViewById(R.id.catBusiness).setOnClickListener(v -> openCategoryInCatalog("Business"));
+        if (ivProfileAvatar != null) {
+            ivProfileAvatar.setOnClickListener(v -> {
+                if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_profile);
+            });
+        }
 
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -113,36 +146,177 @@ public class DashboardFragment extends Fragment {
             public void afterTextChanged(Editable s) {}
         });
 
-        tvSeeAllCategories.setOnClickListener(v -> {
-            expandCategoriesSection();
-        });
+        tvSeeAllCategories.setOnClickListener(v -> expandCategoriesSection());
+        tvSeeAllNew.setOnClickListener(v -> expandNewArrivalsSection());
 
-        tvSeeAllFeatured.setOnClickListener(v -> {
-            expandFeaturedSection();
-        });
-
-        tvSeeAllNew.setOnClickListener(v -> {
-            expandNewArrivalsSection();
-        });
-
-        setupFeaturedBooks();
+        setupCategoryCards(view);
+        setupFeaturedSlideShow();
         setupNewArrivals();
-        updateCategoryCounts(view);
+        loadSavedProfileImage();
 
         return view;
+    }
+
+    private void setupCategoryCards(View view) {
+        setupCategoryCard(view.findViewById(R.id.cardFiction), "Fiction");
+        setupCategoryCard(view.findViewById(R.id.cardMystery), "Mystery");
+        setupCategoryCard(view.findViewById(R.id.cardTech), "Technology");
+        setupCategoryCard(view.findViewById(R.id.cardKids), "Kids");
+        setupCategoryCard(view.findViewById(R.id.cardSelfHelp), "Self Help");
+        setupCategoryCard(view.findViewById(R.id.cardBusiness), "Business");
+    }
+
+    private void setupCategoryCard(View cardView, String categoryName) {
+        if (cardView == null) return;
+        
+        TextView tvName = cardView.findViewById(R.id.tvName);
+        TextView tvCount = cardView.findViewById(R.id.tvCount);
+        ImageView iv1 = cardView.findViewById(R.id.ivCover1);
+        ImageView iv2 = cardView.findViewById(R.id.ivCover2);
+        ImageView iv3 = cardView.findViewById(R.id.ivCover3);
+        
+        List<Book> categoryBooks = new ArrayList<>();
+        for (Book b : allBooks) {
+            if (b.getCategory().equalsIgnoreCase(categoryName)) {
+                categoryBooks.add(b);
+            }
+        }
+        
+        int bgColor;
+        int textColor;
+        
+        switch (categoryName.toLowerCase()) {
+            case "fiction":
+                bgColor = R.color.cat_fiction_bg;
+                textColor = R.color.cat_fiction_text;
+                break;
+            case "kids":
+                bgColor = R.color.cat_kids_bg;
+                textColor = R.color.cat_kids_text;
+                break;
+            case "self help":
+                bgColor = R.color.cat_selfhelp_bg;
+                textColor = R.color.cat_selfhelp_text;
+                break;
+            case "business":
+                bgColor = R.color.cat_business_bg;
+                textColor = R.color.cat_business_text;
+                break;
+            case "mystery":
+                bgColor = R.color.cat_mystery_bg;
+                textColor = R.color.cat_mystery_text;
+                break;
+            case "technology":
+                bgColor = R.color.cat_tech_bg;
+                textColor = R.color.cat_tech_icon;
+                break;
+            default:
+                bgColor = R.color.slate_100;
+                textColor = R.color.text_primary;
+                break;
+        }
+
+        if (cardView instanceof MaterialCardView) {
+            ((MaterialCardView) cardView).setCardBackgroundColor(ContextCompat.getColor(getContext(), bgColor));
+        }
+        tvName.setTextColor(ContextCompat.getColor(getContext(), textColor));
+        tvCount.setTextColor(ContextCompat.getColor(getContext(), textColor));
+        tvCount.setAlpha(0.7f);
+        
+        tvName.setText(categoryName);
+        tvCount.setText(String.format(Locale.US, "%d Books", categoryBooks.size()));
+        
+        if (categoryBooks.size() > 0) iv1.setImageResource(categoryBooks.get(0).getCoverImageRes());
+        if (categoryBooks.size() > 1) iv2.setImageResource(categoryBooks.get(1).getCoverImageRes());
+        if (categoryBooks.size() > 2) iv3.setImageResource(categoryBooks.get(2).getCoverImageRes());
+        
+        cardView.setOnClickListener(v -> openCategoryInCatalog(categoryName));
+    }
+
+    private void setupFeaturedSlideShow() {
+        // Add ALL books into the featured slideshow
+        featuredBooks = new ArrayList<>(allBooks);
+        if (featuredBooks.isEmpty()) return;
+
+        FeaturedBookAdapter adapter = new FeaturedBookAdapter(featuredBooks, new FeaturedBookAdapter.OnFeaturedClickListener() {
+            @Override
+            public void onBookClick(Book book) {
+                openBookDetail(book);
+            }
+
+            @Override
+            public void onExploreClick(Book book) {
+                openBookDetail(book);
+            }
+        });
+        viewPagerFeatured.setAdapter(adapter);
+
+        // Modern visual configuration
+        viewPagerFeatured.setOffscreenPageLimit(3);
+        viewPagerFeatured.setClipToPadding(false);
+        viewPagerFeatured.setClipChildren(false);
+        
+        // Start in the middle of pseudo-infinite range to allow left/right swiping
+        // Using a large number but not MAX_VALUE to be safer
+        int initialPos = (1000 * featuredBooks.size()) / 2;
+        viewPagerFeatured.setCurrentItem(initialPos, false);
+
+        // Smooth and modern Page Transformer (Refined for fluidity)
+        CompositePageTransformer compositePageTransformer = new CompositePageTransformer();
+        compositePageTransformer.addTransformer(new MarginPageTransformer(30));
+        compositePageTransformer.addTransformer((page, position) -> {
+            float r = 1 - Math.abs(position);
+            page.setScaleY(0.95f + r * 0.05f); // Very subtle scale for a premium feel
+            page.setAlpha(0.5f + r * 0.5f);     // Smooth fade out for side items
+        });
+        viewPagerFeatured.setPageTransformer(compositePageTransformer);
+
+        // Recreate dots for the collection
+        tabLayoutIndicator.removeAllTabs();
+        for (int i = 0; i < featuredBooks.size(); i++) {
+            tabLayoutIndicator.addTab(tabLayoutIndicator.newTab());
+        }
+
+        viewPagerFeatured.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                
+                // Sync dots with real book index
+                int realPos = position % featuredBooks.size();
+                TabLayout.Tab tab = tabLayoutIndicator.getTabAt(realPos);
+                if (tab != null) tab.select();
+
+                // Modernizing slide flow: ensure no "jumping" by resetting timer
+                slideHandler.removeCallbacks(sliderRunnable);
+                slideHandler.postDelayed(sliderRunnable, SLIDE_DELAY);
+            }
+        });
+    }
+
+    private void loadSavedProfileImage() {
+        if (getContext() != null && ivProfileAvatar != null) {
+            SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            String uriString = prefs.getString(KEY_PROFILE_URI, null);
+            if (uriString != null) {
+                try {
+                    Uri uri = Uri.parse(uriString);
+                    ivProfileAvatar.setImageURI(null);
+                    ivProfileAvatar.setImageURI(uri);
+                    ivProfileAvatar.setColorFilter(null);
+                    ivProfileAvatar.setImageTintList(null);
+                    ivProfileAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                } catch (Exception e) {
+                    ivProfileAvatar.setImageResource(R.drawable.ic_customers);
+                }
+            }
+        }
     }
 
     private void openCategoryInCatalog(String category) {
         if (getActivity() instanceof MainActivity) {
             ((MainActivity) getActivity()).navigateToCatalog(category);
         }
-    }
-
-    private void updateCategoryCounts(View view) {
-        ((TextView) view.findViewById(R.id.tvFictionCount)).setText(String.format(Locale.US, "%d Books", getCount("Fiction")));
-        ((TextView) view.findViewById(R.id.tvKidsCount)).setText(String.format(Locale.US, "%d Books", getCount("Kids")));
-        ((TextView) view.findViewById(R.id.tvSelfHelpCount)).setText(String.format(Locale.US, "%d Books", getCount("Self Help")));
-        ((TextView) view.findViewById(R.id.tvBusinessCount)).setText(String.format(Locale.US, "%d Books", getCount("Business")));
     }
 
     private void expandCategoriesSection() {
@@ -152,16 +326,20 @@ public class DashboardFragment extends Fragment {
         rvCategoriesExpanded.setLayoutManager(new GridLayoutManager(getContext(), 2));
         
         List<CategoryAdapter.CategoryInfo> categoryInfos = new ArrayList<>();
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Fiction", getCount("Fiction"), R.drawable.ic_book, R.color.cat_fiction_bg, R.color.cat_fiction_icon));
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Kids", getCount("Kids"), R.drawable.ic_book, R.color.cat_kids_bg, R.color.cat_kids_icon));
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Self Help", getCount("Self Help"), R.drawable.ic_customers, R.color.cat_selfhelp_bg, R.color.cat_selfhelp_icon));
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Business", getCount("Business"), R.drawable.ic_inventory, R.color.cat_business_bg, R.color.cat_business_icon));
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Mystery", getCount("Mystery"), R.drawable.ic_book, R.color.cat_mystery_bg, R.color.cat_mystery_icon));
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Technology", getCount("Technology"), R.drawable.ic_inventory, R.color.cat_tech_bg, R.color.cat_tech_icon));
+        String[] catNames = {"Fiction", "Mystery", "Technology", "Kids", "Self Help", "Business"};
+        for (String name : catNames) {
+            List<Integer> covers = new ArrayList<>();
+            int count = 0;
+            for (Book b : allBooks) {
+                if (b.getCategory().equalsIgnoreCase(name)) {
+                    if (covers.size() < 3) covers.add(b.getCoverImageRes());
+                    count++;
+                }
+            }
+            categoryInfos.add(new CategoryAdapter.CategoryInfo(name, count, covers));
+        }
 
-        CategoryAdapter adapter = new CategoryAdapter(categoryInfos, categoryName -> {
-            openCategoryInCatalog(categoryName);
-        });
+        CategoryAdapter adapter = new CategoryAdapter(categoryInfos, this::openCategoryInCatalog);
         rvCategoriesExpanded.setAdapter(adapter);
         rvCategoriesExpanded.setNestedScrollingEnabled(false);
         
@@ -169,30 +347,9 @@ public class DashboardFragment extends Fragment {
         onBackPressedCallback.setEnabled(true);
     }
 
-    private int getCount(String category) {
-        int count = 0;
-        for (Book book : allBooks) {
-            if (book.getCategory().equals(category)) count++;
-        }
-        return count;
-    }
-
-    private void expandFeaturedSection() {
-        hsvFeatured.setVisibility(View.GONE);
-        rvFeaturedExpanded.setVisibility(View.VISIBLE);
-        
-        rvFeaturedExpanded.setLayoutManager(new GridLayoutManager(getContext(), 2));
-        BookAdapter expandedAdapter = new BookAdapter(allBooks, this::openBookDetail);
-        rvFeaturedExpanded.setAdapter(expandedAdapter);
-        rvFeaturedExpanded.setNestedScrollingEnabled(false);
-        
-        tvSeeAllFeatured.setVisibility(View.GONE);
-        onBackPressedCallback.setEnabled(true);
-    }
-
     private void expandNewArrivalsSection() {
         newArrivalsList.clear();
-        newArrivalsList.addAll(allBooks); // Show all products when clicked
+        newArrivalsList.addAll(allBooks); 
         newArrivalsAdapter.notifyDataSetChanged();
         tvSeeAllNew.setVisibility(View.GONE);
         onBackPressedCallback.setEnabled(true);
@@ -204,8 +361,6 @@ public class DashboardFragment extends Fragment {
         tvSeeAllCategories.setVisibility(View.VISIBLE);
 
         hsvFeatured.setVisibility(View.VISIBLE);
-        rvFeaturedExpanded.setVisibility(View.GONE);
-        tvSeeAllFeatured.setVisibility(View.VISIBLE);
         
         newArrivalsList.clear();
         newArrivalsList.addAll(getFeaturedNewArrivals());
@@ -217,14 +372,13 @@ public class DashboardFragment extends Fragment {
 
     private List<Book> getFeaturedNewArrivals() {
         List<Book> result = new ArrayList<>();
-        // Select exactly two books per category with outstanding covers for "New Arrivals"
         List<String> outstandingTitles = Arrays.asList(
-            "milk and honey", "The Alchemist",         // Fiction
-            "The Adventures of Sherlock Holmes", "The Silent Patient", // Mystery
-            "The Pragmatic Programmer", "Clean Code",         // Technology
-            "Zero to One", "The Intelligent Investor",        // Business
-            "The Cat in the Hat", "The Very Hungry Caterpillar", // Kids
-            "Ego is the Enemy", "Atomic Habits"        // Self Help
+            "milk and honey", "The Alchemist",
+            "Sherlock Holmes", "The Silent Patient",
+            "The Pragmatic Programmer", "Clean Code",
+            "Zero to One", "The Intelligent Investor",
+            "The Cat in the Hat", "The Very Hungry Caterpillar",
+            "Ego is the Enemy", "Atomic Habits"
         );
 
         for (String title : outstandingTitles) {
@@ -240,7 +394,6 @@ public class DashboardFragment extends Fragment {
 
     private void filterBooks(String query) {
         List<Book> filtered = new ArrayList<>();
-        // Only search/filter within the "New Arrivals" subset as per request
         List<Book> sourceList = getFeaturedNewArrivals();
         for (Book book : sourceList) {
             if (book.getTitle().toLowerCase().contains(query.toLowerCase()) || 
@@ -256,45 +409,6 @@ public class DashboardFragment extends Fragment {
             onBackPressedCallback.setEnabled(true);
         } else {
             collapseAllSections();
-        }
-    }
-
-    private void setupFeaturedBooks() {
-        featuredBooksContainer.removeAllViews();
-        
-        // Default only one image shown: "goodbye kiss"
-        Book tempBook = null;
-        for (Book book : allBooks) {
-            if (book.getTitle().equalsIgnoreCase("goodbye kiss")) {
-                tempBook = book;
-                break;
-            }
-        }
-        
-        if (tempBook == null && !allBooks.isEmpty()) {
-            tempBook = allBooks.get(0);
-        }
-
-        final Book goodbyeKiss = tempBook;
-
-        if (goodbyeKiss != null) {
-            LayoutInflater inflater = LayoutInflater.from(getContext());
-            View bookView = inflater.inflate(R.layout.item_book, featuredBooksContainer, false);
-            ViewGroup.LayoutParams lp = bookView.getLayoutParams();
-            lp.width = (int) (160 * getResources().getDisplayMetrics().density);
-            bookView.setLayoutParams(lp);
-
-            ((TextView) bookView.findViewById(R.id.textViewTitle)).setText(goodbyeKiss.getTitle());
-            ((TextView) bookView.findViewById(R.id.textViewAuthor)).setText(goodbyeKiss.getAuthor());
-            ((TextView) bookView.findViewById(R.id.textViewCategoryTag)).setText(goodbyeKiss.getCategory());
-            
-            ImageView ivCover = bookView.findViewById(R.id.imageViewCover);
-            if (goodbyeKiss.getCoverImageRes() != 0) {
-                ivCover.setImageResource(goodbyeKiss.getCoverImageRes());
-            }
-
-            bookView.setOnClickListener(v -> openBookDetail(goodbyeKiss));
-            featuredBooksContainer.addView(bookView);
         }
     }
 
@@ -319,11 +433,13 @@ public class DashboardFragment extends Fragment {
         popup.getMenu().add("My Profile");
         popup.getMenu().add("Settings");
         popup.setOnMenuItemClickListener(item -> {
-            if (item.getTitle().equals("My Profile")) {
-                BottomNavigationView bottomNav = getActivity().findViewById(R.id.bottom_navigation);
-                if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_profile);
-            } else if (item.getTitle().equals("Help Section")) {
-                showToast("Opening Help & Support...");
+            if ("My Profile".equals(item.getTitle())) {
+                if (getActivity() != null) {
+                    BottomNavigationView bottomNav = getActivity().findViewById(R.id.bottom_navigation);
+                    if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_profile);
+                }
+            } else if ("Help Section".equals(item.getTitle())) {
+                showToast("Opening Help & Support…");
             }
             return true;
         });
@@ -333,6 +449,15 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        loadSavedProfileImage();
+        slideHandler.removeCallbacks(sliderRunnable);
+        slideHandler.postDelayed(sliderRunnable, SLIDE_DELAY);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        slideHandler.removeCallbacks(sliderRunnable);
     }
 
     private void showToast(String message) {

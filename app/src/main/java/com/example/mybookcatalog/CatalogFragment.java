@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,12 +40,17 @@ public class CatalogFragment extends Fragment {
     private String currentSearchQuery = "";
     private String selectedCategory = "All";
 
-    public static CatalogFragment newInstance(String category) {
+    public static CatalogFragment newInstance(String category, String searchQuery) {
         CatalogFragment fragment = new CatalogFragment();
         Bundle args = new Bundle();
         args.putString("selected_category", category);
+        args.putString("search_query", searchQuery);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    public static CatalogFragment newInstance(String category) {
+        return newInstance(category, "");
     }
 
     @Nullable
@@ -58,8 +62,13 @@ public class CatalogFragment extends Fragment {
         view.setPadding(0, getStatusBarHeight(), 0, 0);
 
         // Recover state from arguments if arriving from home
-        if (getArguments() != null && getArguments().containsKey("selected_category")) {
-            selectedCategory = getArguments().getString("selected_category", "All");
+        if (getArguments() != null) {
+            if (getArguments().containsKey("selected_category")) {
+                selectedCategory = getArguments().getString("selected_category", "All");
+            }
+            if (getArguments().containsKey("search_query")) {
+                currentSearchQuery = getArguments().getString("search_query", "");
+            }
         }
 
         // Initialize UI components
@@ -105,26 +114,10 @@ public class CatalogFragment extends Fragment {
     private void setupCategoryList() {
         List<CategoryAdapter.CategoryInfo> categoryInfos = new ArrayList<>();
         
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("All", allBooks.size(), 
-                R.drawable.ic_book, R.color.slate_100, R.color.text_secondary));
-        
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Fiction", getCount("Fiction"), 
-                R.drawable.ic_book, R.color.cat_fiction_bg, R.color.cat_fiction_icon));
-        
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Kids", getCount("Kids"), 
-                R.drawable.ic_book, R.color.cat_kids_bg, R.color.cat_kids_icon));
-
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Self Help", getCount("Self Help"), 
-                R.drawable.ic_customers, R.color.cat_selfhelp_bg, R.color.cat_selfhelp_icon));
-        
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Business", getCount("Business"), 
-                R.drawable.ic_inventory, R.color.cat_business_bg, R.color.cat_business_icon));
-
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Mystery", getCount("Mystery"), 
-                R.drawable.ic_book, R.color.cat_mystery_bg, R.color.cat_mystery_icon));
-
-        categoryInfos.add(new CategoryAdapter.CategoryInfo("Technology", getCount("Technology"), 
-                R.drawable.ic_inventory, R.color.cat_tech_bg, R.color.cat_tech_icon));
+        String[] catNames = {"All", "Fiction", "Kids", "Self Help", "Business", "Mystery", "Technology"};
+        for (String name : catNames) {
+            categoryInfos.add(new CategoryAdapter.CategoryInfo(name, getCount(name), getCoversForCategory(name)));
+        }
 
         categoryAdapter = new CategoryAdapter(categoryInfos, categoryName -> {
             selectedCategory = categoryName;
@@ -136,7 +129,23 @@ public class CatalogFragment extends Fragment {
         categoryAdapter.setSelectedCategory(selectedCategory);
     }
 
+    private List<Integer> getCoversForCategory(String category) {
+        List<Integer> covers = new ArrayList<>();
+        if (allBooks == null) return covers;
+        for (Book book : allBooks) {
+            if (category.equalsIgnoreCase("All") || book.getCategory().equalsIgnoreCase(category)) {
+                covers.add(book.getCoverImageRes());
+                if (covers.size() >= 3) break;
+            }
+        }
+        return covers;
+    }
+
     private void setupSearchLogic(View root) {
+        if (currentSearchQuery != null && !currentSearchQuery.isEmpty()) {
+            editTextSearch.setText(currentSearchQuery);
+        }
+
         editTextSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -156,13 +165,17 @@ public class CatalogFragment extends Fragment {
         if (searchIcon != null) {
             searchIcon.setOnClickListener(v -> {
                 editTextSearch.requestFocus();
-                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                if (imm != null) imm.showSoftInput(editTextSearch, InputMethodManager.SHOW_IMPLICIT);
+                if (getActivity() != null) {
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) imm.showSoftInput(editTextSearch, InputMethodManager.SHOW_IMPLICIT);
+                }
             });
         }
     }
 
     private int getCount(String category) {
+        if (allBooks == null) return 0;
+        if (category.equalsIgnoreCase("All")) return allBooks.size();
         int count = 0;
         for (Book book : allBooks) {
             if (book.getCategory().equalsIgnoreCase(category)) count++;

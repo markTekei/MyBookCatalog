@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootCard"
-    android:layout_width="120dp"
+    android:layout_width="140dp"
     android:layout_height="wrap_content"
     android:layout_marginEnd="12dp"
     app:cardCornerRadius="16dp"
-    app:strokeWidth="2dp"
-    app:strokeColor="@android:color/transparent"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp"
     android:clickable="true"
     android:focusable="true">
 
@@ -15,28 +16,63 @@
         android:id="@+id/layoutBg"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="12dp">
 
-        <ImageView
-            android:id="@+id/ivIcon"
-            android:layout_width="24dp"
-            android:layout_height="24dp" />
+        <!-- Cover Collage Section -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginBottom="12dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCover3"
+                android:layout_width="50dp"
+                android:layout_height="70dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_launcher_background"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:shapeAppearanceOverlay="@style/RoundedImage" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCover2"
+                android:layout_width="50dp"
+                android:layout_height="70dp"
+                android:layout_marginEnd="20dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_launcher_background"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:shapeAppearanceOverlay="@style/RoundedImage" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCover1"
+                android:layout_width="55dp"
+                android:layout_height="80dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_launcher_background"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:shapeAppearanceOverlay="@style/RoundedImage" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
             android:id="@+id/tvName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:textColor="@color/text_primary"
-            android:textStyle="bold" />
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Fiction" />
 
         <TextView
             android:id="@+id/tvCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/text_secondary"
-            android:textSize="10sp" />
+            android:textSize="13sp"
+            tools:text="12 Books" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

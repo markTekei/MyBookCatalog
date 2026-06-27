@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">MyBookCatalog</string>
+    <string name="user_name">MARK TEKEI</string>
+    <string name="user_email">marktekei903@gmail.com</string>
+    <string name="greeting_format">Hello, %1$s 👋</string>
+    <string name="logout_message">Logging out&#8230;</string>
+    <string name="profile_updated">Profile picture updated</string>
 </resources>

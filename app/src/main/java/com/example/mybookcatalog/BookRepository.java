@@ -25,6 +25,10 @@ public class BookRepository {
                 "Winston Smith rebels against a totalitarian government led by Big Brother in a society where thought and freedom are forbidden.", "Fiction", 
                 "A chilling look at a world of constant surveillance and psychological manipulation, where truth is whatever the state says it is.", "978-0451524935", "Signet Classic", "1st", 1949, "English", 0.0, 0.0, 0, 120, 328, 4.7, R.drawable.f3));
 
+        allBooks.add(new Book("The Hobbit", "J.R.R. Tolkien", 
+                "Bilbo Baggins, a home-loving hobbit, is swept into a quest to raid the treasure-hoard of Smaug the Magnificent, a large and very dangerous dragon.", "Fiction", 
+                "A classic adventure that sets the stage for The Lord of the Rings, filled with trolls, goblins, and a very famous ring.", "978-0547928227", "Houghton Mifflin", "1st", 1937, "English", 0.0, 0.0, 0, 90, 310, 4.9, R.drawable.f1));
+
         // --- Mystery ---
         allBooks.add(new Book("Sherlock Holmes", "Arthur Conan Doyle", 
                 "Detective Sherlock Holmes and Dr. Watson solve the most impossible mysteries in Victorian London using logic and observation.", "Mystery", 

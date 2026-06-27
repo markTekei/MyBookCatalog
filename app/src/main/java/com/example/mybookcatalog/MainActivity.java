@@ -12,6 +12,7 @@ public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
     private String pendingCategory = null;
+    private String pendingSearchQuery = null;
     private long backPressedTime;
 
     @Override
@@ -22,7 +23,6 @@ public class MainActivity extends AppCompatActivity {
 
         bottomNav = findViewById(R.id.bottom_navigation);
         
-        // Handle navigation between modules
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
             int itemId = item.getItemId();
@@ -30,9 +30,13 @@ public class MainActivity extends AppCompatActivity {
             if (itemId == R.id.nav_home) {
                 selectedFragment = new DashboardFragment();
             } else if (itemId == R.id.nav_categories) {
-                if (pendingCategory != null) {
-                    selectedFragment = CatalogFragment.newInstance(pendingCategory);
-                    pendingCategory = null; // Clear it after creating the fragment
+                if (pendingCategory != null || pendingSearchQuery != null) {
+                    selectedFragment = CatalogFragment.newInstance(
+                            pendingCategory != null ? pendingCategory : "All",
+                            pendingSearchQuery != null ? pendingSearchQuery : ""
+                    );
+                    pendingCategory = null;
+                    pendingSearchQuery = null;
                 } else {
                     selectedFragment = new CatalogFragment();
                 }
@@ -48,20 +52,16 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        // Set Home as the default landing screen
         if (savedInstanceState == null) {
             bottomNav.setSelectedItemId(R.id.nav_home);
         }
 
-        // Custom back button behavior
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 if (bottomNav.getSelectedItemId() != R.id.nav_home) {
-                    // If not on Home tab, navigate back to Home
                     bottomNav.setSelectedItemId(R.id.nav_home);
                 } else {
-                    // If on Home tab, implement double-back-to-exit
                     if (backPressedTime + 2000 > System.currentTimeMillis()) {
                         finish();
                     } else {
@@ -73,12 +73,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Navigates to the Catalog tab and applies a category filter.
-     * Uses a pendingCategory variable to ensure the listener creates the correct fragment.
-     */
     public void navigateToCatalog(String category) {
+        navigateToCatalog(category, null);
+    }
+
+    public void navigateToCatalog(String category, String searchQuery) {
         this.pendingCategory = category;
+        this.pendingSearchQuery = searchQuery;
         bottomNav.setSelectedItemId(R.id.nav_categories);
     }
 }

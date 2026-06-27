@@ -16,7 +16,7 @@
     <color name="slate_100">#F1F5F9</color>
     <color name="slate_200">#E2E8F0</color>
 
-    <!-- Category Colors -->
+    <!-- Category Backgrounds -->
     <color name="cat_fiction_bg">#EEF2FF</color>
     <color name="cat_fiction_icon">#6366F1</color>
     <color name="cat_selfhelp_bg">#ECFDF5</color>
@@ -29,6 +29,14 @@
     <color name="cat_mystery_icon">#8B5CF6</color>
     <color name="cat_tech_bg">#F0FDFA</color>
     <color name="cat_tech_icon">#0D9488</color>
+
+    <!-- Category Text Colors (High Contrast) -->
+    <color name="cat_fiction_text">#3730A3</color>
+    <color name="cat_selfhelp_text">#065F46</color>
+    <color name="cat_business_text">#9A3412</color>
+    <color name="cat_kids_text">#854D0E</color>
+    <color name="cat_mystery_text">#5B21B6</color>
+    <color name="cat_tech_text">#115E59</color>
 
     <color name="chip_background_selected">#4F46E5</color>
     <color name="chip_background_unselected">#F1F5F9</color>
