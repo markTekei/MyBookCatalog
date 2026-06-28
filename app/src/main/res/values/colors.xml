@@ -12,6 +12,11 @@
     <color name="text_primary">#1E293B</color>
     <color name="text_secondary">#64748B</color>
 
+    <!-- Premium Logo Colors -->
+    <color name="logo_gradient_start">#6366F1</color>
+    <color name="logo_gradient_end">#A855F7</color>
+    <color name="logo_accent">#F472B6</color>
+
     <color name="slate_50">#F8FAFC</color>
     <color name="slate_100">#F1F5F9</color>
     <color name="slate_200">#E2E8F0</color>

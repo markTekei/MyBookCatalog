@@ -4,50 +4,45 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="@color/surface_background">
 
-    <!-- Header Section -->
-    <View
-        android:id="@+id/headerLogoBackground"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+    <!-- Header Section (Restored to Book Image) -->
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/headerBookPreview"
+        android:layout_width="52dp"
+        android:layout_height="64dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="24dp"
-        android:background="@drawable/bg_logo_orange"
+        android:scaleType="centerCrop"
+        android:src="@drawable/f3"
+        android:elevation="4dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/headerLogoIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:contentDescription="Logo"
-        android:src="@drawable/ic_book"
-        app:layout_constraintBottom_toBottomOf="@id/headerLogoBackground"
-        app:layout_constraintEnd_toEndOf="@id/headerLogoBackground"
-        app:layout_constraintStart_toStartOf="@id/headerLogoBackground"
-        app:layout_constraintTop_toTopOf="@id/headerLogoBackground"
-        app:tint="@android:color/white" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearanceOverlay="@style/RoundedImage" />
 
     <TextView
         android:id="@+id/textViewTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:text="MyBookCatalog"
-        android:textColor="#0F172A"
-        android:textSize="20sp"
+        android:text="@string/app_name"
+        android:textColor="@color/text_primary"
+        android:textSize="22sp"
         android:textStyle="bold"
-        app:layout_constraintStart_toEndOf="@id/headerLogoBackground"
-        app:layout_constraintTop_toTopOf="@id/headerLogoBackground" />
+        android:letterSpacing="-0.02"
+        app:layout_constraintBottom_toTopOf="@id/textViewSubtitle"
+        app:layout_constraintStart_toEndOf="@id/headerBookPreview"
+        app:layout_constraintTop_toTopOf="@id/headerBookPreview"
+        app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView
         android:id="@+id/textViewSubtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Your personal library"
-        android:textColor="#94A3B8"
+        android:textColor="@color/text_secondary"
         android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@id/headerBookPreview"
         app:layout_constraintStart_toStartOf="@id/textViewTitle"
         app:layout_constraintTop_toBottomOf="@id/textViewTitle" />
 
@@ -57,14 +52,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="24dp"
-        android:backgroundTint="#0F172A"
+        android:backgroundTint="@color/text_primary"
         android:text="+ Add Book"
         android:textAllCaps="false"
-        android:textColor="@android:color/white"
+        android:textColor="@color/white"
         app:cornerRadius="20dp"
-        app:layout_constraintBottom_toBottomOf="@id/headerLogoBackground"
+        app:layout_constraintBottom_toBottomOf="@id/headerBookPreview"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/headerLogoBackground" />
+        app:layout_constraintTop_toTopOf="@id/headerBookPreview" />
 
     <!-- Search Section -->
     <LinearLayout
@@ -76,7 +71,7 @@
         android:orientation="horizontal"
         android:paddingStart="24dp"
         android:paddingEnd="24dp"
-        app:layout_constraintTop_toBottomOf="@id/textViewSubtitle">
+        app:layout_constraintTop_toBottomOf="@id/headerBookPreview">
 
         <ImageView
             android:id="@+id/buttonSearch"
@@ -86,12 +81,12 @@
             android:contentDescription="Search"
             android:padding="12dp"
             android:src="@android:drawable/ic_menu_search"
-            app:tint="#64748B" />
+            app:tint="@color/text_secondary" />
 
         <EditText
             android:id="@+id/editTextSearch"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="52dp"
             android:layout_marginStart="12dp"
             android:background="@drawable/bg_search_rounded"
             android:hint="Search books or authors..."
@@ -99,8 +94,9 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:textSize="14sp"
-            android:textColor="#0F172A"
-            android:textColorHint="#94A3B8"/>
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary"
+            android:elevation="2dp"/>
     </LinearLayout>
 
     <!-- Categories RecyclerView -->
@@ -123,8 +119,9 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="24dp"
-        android:textColor="#94A3B8"
+        android:textColor="@color/text_secondary"
         android:textSize="14sp"
+        android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/rvCategories"
         tools:text="8 books" />
@@ -157,14 +154,14 @@
             android:layout_height="64dp"
             android:contentDescription="No results"
             android:src="@drawable/ic_book"
-            app:tint="#E2E8F0" />
+            app:tint="@color/slate_200" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="No matches found"
-            android:textColor="#0F172A"
+            android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>

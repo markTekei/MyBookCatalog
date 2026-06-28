@@ -3,6 +3,9 @@ package com.example.mybookcatalog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -16,26 +19,31 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 public class CustomersFragment extends Fragment {
 
     private ImageView ivProfilePicture;
     private ActivityResultLauncher<String[]> galleryLauncher;
+    
     private static final String PREFS_NAME = "ProfilePrefs";
-    private static final String KEY_PROFILE_URI = "profile_uri";
+    private static final String KEY_PROFILE_PATH = "profile_image_path";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Use OpenDocument to get a URI that we can take persistable permissions on
         galleryLauncher = registerForActivityResult(
                 new ActivityResultContracts.OpenDocument(),
                 uri -> {
                     if (uri != null) {
                         saveProfileImage(uri);
-                        displayProfileImage(uri);
+                        loadSavedProfileImage();
                         showToast(getString(R.string.profile_updated));
                     }
                 }
@@ -51,16 +59,14 @@ public class CustomersFragment extends Fragment {
         TextView tvEmail = view.findViewById(R.id.tvProfileEmail);
         ivProfilePicture = view.findViewById(R.id.ivProfilePicture);
 
-        // Setting your profile data from strings.xml
         tvName.setText(R.string.user_name);
         tvEmail.setText(R.string.user_email);
 
         loadSavedProfileImage();
 
-        view.findViewById(R.id.cvProfileImage).setOnClickListener(v -> 
+        ivProfilePicture.setOnClickListener(v -> 
             galleryLauncher.launch(new String[]{"image/*"}));
 
-        // Rest of click listeners...
         view.findViewById(R.id.btnLogout).setOnClickListener(v -> {
             showToast(getString(R.string.logout_message));
             Intent intent = new Intent(getActivity(), LoginActivity.class);
@@ -73,34 +79,71 @@ public class CustomersFragment extends Fragment {
     }
 
     private void saveProfileImage(Uri uri) {
-        if (getContext() != null) {
-            try {
-                // Grant persistable permission so it works across app restarts
-                getContext().getContentResolver().takePersistableUriPermission(uri, 
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            } catch (SecurityException ignored) {}
-            
-            SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            prefs.edit().putString(KEY_PROFILE_URI, uri.toString()).apply();
+        Context context = getContext();
+        if (context == null) return;
+        try {
+            InputStream is = context.getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(is);
+            if (is != null) is.close();
+
+            if (bitmap != null) {
+                // Resize to prevent memory issues and ensure visibility
+                int maxSize = 800;
+                int width = bitmap.getWidth();
+                int height = bitmap.getHeight();
+                if (width > maxSize || height > maxSize) {
+                    float ratio = (float) width / (float) height;
+                    if (ratio > 1) {
+                        width = maxSize;
+                        height = (int) (maxSize / ratio);
+                    } else {
+                        height = maxSize;
+                        width = (int) (maxSize * ratio);
+                    }
+                    bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
+                }
+
+                File file = new File(context.getFilesDir(), "profile_photo.jpg");
+                try (FileOutputStream os = new FileOutputStream(file)) {
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, os);
+                }
+                
+                SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                prefs.edit().putString(KEY_PROFILE_PATH, file.getAbsolutePath()).commit();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     private void loadSavedProfileImage() {
-        if (getContext() != null) {
+        if (getContext() != null && ivProfilePicture != null) {
             SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            String uriString = prefs.getString(KEY_PROFILE_URI, null);
-            if (uriString != null) {
-                displayProfileImage(Uri.parse(uriString));
-            }
-        }
-    }
-
-    private void displayProfileImage(Uri uri) {
-        if (ivProfilePicture != null) {
-            ivProfilePicture.setImageURI(uri);
-            ivProfilePicture.setImageTintList(null); // Remove default icon tint
+            String path = prefs.getString(KEY_PROFILE_PATH, null);
+            
+            // RESET: Completely clear tints and filters to fix "black photo" bug
+            ivProfilePicture.setImageTintList(null);
             ivProfilePicture.setColorFilter(null);
-            ivProfilePicture.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            ivProfilePicture.setBackgroundColor(Color.WHITE); 
+            ivProfilePicture.setPadding(0, 0, 0, 0);
+            
+            if (path != null) {
+                File file = new File(path);
+                if (file.exists()) {
+                    Bitmap bitmap = BitmapFactory.decodeFile(path);
+                    if (bitmap != null) {
+                        ivProfilePicture.setImageBitmap(bitmap);
+                        ivProfilePicture.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        return;
+                    }
+                }
+            }
+            
+            // Fallback placeholder
+            ivProfilePicture.setImageResource(R.drawable.ic_customers);
+            ivProfilePicture.setPadding(32, 32, 32, 32);
+            ivProfilePicture.setImageTintList(android.content.res.ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), R.color.colorPrimary)));
         }
     }
 

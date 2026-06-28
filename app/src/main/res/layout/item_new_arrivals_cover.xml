@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardCover"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="20dp"
+    android:layout_marginBottom="16dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/white"
+        android:padding="16dp">
+
+        <!-- Cover Collage Section (6 books fanning out exactly like categories) at the top -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layoutCovers"
+            android:layout_width="match_parent"
+            android:layout_height="130dp"
+            android:layout_marginBottom="16dp">
+
+            <!-- Fanning stack logic: Book 6 is furthest back, Book 1 is front-most -->
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCover6"
+                android:layout_width="55dp"
+                android:layout_height="80dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:shapeAppearanceOverlay="@style/RoundedImage"
+                tools:src="@drawable/b1" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCover5"
+                android:layout_width="55dp"
+                android:layout_height="80dp"
+                android:layout_marginEnd="15dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:shapeAppearanceOverlay="@style/RoundedImage"
+                tools:src="@drawable/s1" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCover4"
+                android:layout_width="60dp"
+                android:layout_height="85dp"
+                android:layout_marginEnd="30dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:shapeAppearanceOverlay="@style/RoundedImage"
+                tools:src="@drawable/k1" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCover3"
+                android:layout_width="65dp"
+                android:layout_height="95dp"
+                android:layout_marginEnd="45dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:shapeAppearanceOverlay="@style/RoundedImage"
+                tools:src="@drawable/t1" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCover2"
+                android:layout_width="70dp"
+                android:layout_height="105dp"
+                android:layout_marginEnd="65dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:shapeAppearanceOverlay="@style/RoundedImage"
+                android:elevation="2dp"
+                tools:src="@drawable/m1" />
+
+            <!-- Front Layer (Main book like ivCover1 in categories) -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCover1"
+                android:layout_width="85dp"
+                android:layout_height="120dp"
+                android:layout_marginStart="20dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:shapeAppearanceOverlay="@style/RoundedImage"
+                android:elevation="4dp"
+                tools:src="@drawable/f1" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/tvTag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_genre_tag"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="2dp"
+            android:text="CURATED PICKS"
+            android:textColor="#0F172A"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Fresh Picked for You"
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="6 unique books across all categories"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnViewAll"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:text="Explore Collection →"
+            android:textColor="@color/colorPrimary"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

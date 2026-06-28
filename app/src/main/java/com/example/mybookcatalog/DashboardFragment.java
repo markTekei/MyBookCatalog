@@ -3,6 +3,8 @@ package com.example.mybookcatalog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -36,6 +38,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.tabs.TabLayout;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -50,9 +53,11 @@ public class DashboardFragment extends Fragment {
     private RecyclerView rvCategoriesExpanded;
     private View hsvFeatured;
     private RecyclerView rvNewArrivals;
+    private View newArrivalsCover;
     private BookAdapter newArrivalsAdapter;
     private List<Book> allBooks;
     private List<Book> newArrivalsList;
+    private List<Book> fullNewArrivalsList;
     private List<Book> featuredBooks;
     
     private TextView tvSeeAllNew;
@@ -63,7 +68,6 @@ public class DashboardFragment extends Fragment {
     
     private OnBackPressedCallback onBackPressedCallback;
     
-    // Slower, more modernized slideshow speed (15 seconds per book)
     private static final long SLIDE_DELAY = 15000; 
     
     private Handler slideHandler = new Handler(Looper.getMainLooper());
@@ -71,7 +75,6 @@ public class DashboardFragment extends Fragment {
         @Override
         public void run() {
             if (viewPagerFeatured != null && featuredBooks != null && !featuredBooks.isEmpty()) {
-                // Guaranteed one-by-one sequential slide
                 int nextItem = viewPagerFeatured.getCurrentItem() + 1;
                 viewPagerFeatured.setCurrentItem(nextItem, true);
             }
@@ -79,7 +82,7 @@ public class DashboardFragment extends Fragment {
     };
 
     private static final String PREFS_NAME = "ProfilePrefs";
-    private static final String KEY_PROFILE_URI = "profile_uri";
+    private static final String KEY_PROFILE_PATH = "profile_image_path";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -107,6 +110,7 @@ public class DashboardFragment extends Fragment {
         rvCategoriesExpanded = view.findViewById(R.id.rvCategoriesExpanded);
         hsvFeatured = view.findViewById(R.id.hsvFeatured);
         rvNewArrivals = view.findViewById(R.id.rvNewArrivals);
+        newArrivalsCover = view.findViewById(R.id.newArrivalsCover);
         tvSeeAllNew = view.findViewById(R.id.tvSeeAllNew);
         tvSeeAllCategories = view.findViewById(R.id.tvSeeAllCategories);
         ivProfileAvatar = view.findViewById(R.id.ivProfileAvatar);
@@ -234,7 +238,6 @@ public class DashboardFragment extends Fragment {
     }
 
     private void setupFeaturedSlideShow() {
-        // Add ALL books into the featured slideshow
         featuredBooks = new ArrayList<>(allBooks);
         if (featuredBooks.isEmpty()) return;
 
@@ -246,32 +249,29 @@ public class DashboardFragment extends Fragment {
 
             @Override
             public void onExploreClick(Book book) {
-                openBookDetail(book);
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).navigateToCatalog(book.getCategory(), book.getTitle());
+                }
             }
         });
         viewPagerFeatured.setAdapter(adapter);
 
-        // Modern visual configuration
         viewPagerFeatured.setOffscreenPageLimit(3);
         viewPagerFeatured.setClipToPadding(false);
         viewPagerFeatured.setClipChildren(false);
         
-        // Start in the middle of pseudo-infinite range to allow left/right swiping
-        // Using a large number but not MAX_VALUE to be safer
         int initialPos = (1000 * featuredBooks.size()) / 2;
         viewPagerFeatured.setCurrentItem(initialPos, false);
 
-        // Smooth and modern Page Transformer (Refined for fluidity)
         CompositePageTransformer compositePageTransformer = new CompositePageTransformer();
         compositePageTransformer.addTransformer(new MarginPageTransformer(30));
         compositePageTransformer.addTransformer((page, position) -> {
             float r = 1 - Math.abs(position);
-            page.setScaleY(0.95f + r * 0.05f); // Very subtle scale for a premium feel
-            page.setAlpha(0.5f + r * 0.5f);     // Smooth fade out for side items
+            page.setScaleY(0.95f + r * 0.05f);
+            page.setAlpha(0.5f + r * 0.5f);
         });
         viewPagerFeatured.setPageTransformer(compositePageTransformer);
 
-        // Recreate dots for the collection
         tabLayoutIndicator.removeAllTabs();
         for (int i = 0; i < featuredBooks.size(); i++) {
             tabLayoutIndicator.addTab(tabLayoutIndicator.newTab());
@@ -281,13 +281,10 @@ public class DashboardFragment extends Fragment {
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
-                
-                // Sync dots with real book index
                 int realPos = position % featuredBooks.size();
                 TabLayout.Tab tab = tabLayoutIndicator.getTabAt(realPos);
                 if (tab != null) tab.select();
 
-                // Modernizing slide flow: ensure no "jumping" by resetting timer
                 slideHandler.removeCallbacks(sliderRunnable);
                 slideHandler.postDelayed(sliderRunnable, SLIDE_DELAY);
             }
@@ -297,20 +294,71 @@ public class DashboardFragment extends Fragment {
     private void loadSavedProfileImage() {
         if (getContext() != null && ivProfileAvatar != null) {
             SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            String uriString = prefs.getString(KEY_PROFILE_URI, null);
-            if (uriString != null) {
-                try {
-                    Uri uri = Uri.parse(uriString);
-                    ivProfileAvatar.setImageURI(null);
-                    ivProfileAvatar.setImageURI(uri);
-                    ivProfileAvatar.setColorFilter(null);
-                    ivProfileAvatar.setImageTintList(null);
-                    ivProfileAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                } catch (Exception e) {
-                    ivProfileAvatar.setImageResource(R.drawable.ic_customers);
-                }
+            String path = prefs.getString(KEY_PROFILE_PATH, null);
+            if (path != null) {
+                displayProfileImage(path);
+            } else {
+                setDefaultPlaceholder();
             }
         }
+    }
+
+    private void displayProfileImage(String path) {
+        if (ivProfileAvatar == null) return;
+        try {
+            File file = new File(path);
+            if (file.exists()) {
+                // RESET appearance
+                ivProfileAvatar.setImageTintList(null);
+                ivProfileAvatar.setColorFilter(null);
+                ivProfileAvatar.setPadding(0, 0, 0, 0);
+                
+                Bitmap bitmap = decodeSampledBitmapFromFile(path, 150, 150);
+                if (bitmap != null) {
+                    ivProfileAvatar.setImageBitmap(bitmap);
+                    ivProfileAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                } else {
+                    setDefaultPlaceholder();
+                }
+            } else {
+                setDefaultPlaceholder();
+            }
+        } catch (Exception e) {
+            setDefaultPlaceholder();
+        }
+    }
+
+    private void setDefaultPlaceholder() {
+        if (ivProfileAvatar != null) {
+            ivProfileAvatar.setImageResource(R.drawable.ic_customers);
+            ivProfileAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), R.color.white)));
+            ivProfileAvatar.setPadding(12, 12, 12, 12);
+        }
+    }
+
+    private Bitmap decodeSampledBitmapFromFile(String path, int reqWidth, int reqHeight) {
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, options);
+
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(path, options);
+    }
+
+    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+        if (height > reqHeight || width > reqWidth) {
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+        return inSampleSize;
     }
 
     private void openCategoryInCatalog(String category) {
@@ -322,7 +370,6 @@ public class DashboardFragment extends Fragment {
     private void expandCategoriesSection() {
         hsvCategories.setVisibility(View.GONE);
         rvCategoriesExpanded.setVisibility(View.VISIBLE);
-        
         rvCategoriesExpanded.setLayoutManager(new GridLayoutManager(getContext(), 2));
         
         List<CategoryAdapter.CategoryInfo> categoryInfos = new ArrayList<>();
@@ -348,8 +395,10 @@ public class DashboardFragment extends Fragment {
     }
 
     private void expandNewArrivalsSection() {
+        newArrivalsCover.setVisibility(View.GONE);
+        rvNewArrivals.setVisibility(View.VISIBLE);
         newArrivalsList.clear();
-        newArrivalsList.addAll(allBooks); 
+        newArrivalsList.addAll(fullNewArrivalsList); 
         newArrivalsAdapter.notifyDataSetChanged();
         tvSeeAllNew.setVisibility(View.GONE);
         onBackPressedCallback.setEnabled(true);
@@ -362,9 +411,8 @@ public class DashboardFragment extends Fragment {
 
         hsvFeatured.setVisibility(View.VISIBLE);
         
-        newArrivalsList.clear();
-        newArrivalsList.addAll(getFeaturedNewArrivals());
-        newArrivalsAdapter.notifyDataSetChanged();
+        newArrivalsCover.setVisibility(View.VISIBLE);
+        rvNewArrivals.setVisibility(View.GONE);
         tvSeeAllNew.setVisibility(View.VISIBLE);
         
         onBackPressedCallback.setEnabled(false);
@@ -372,21 +420,20 @@ public class DashboardFragment extends Fragment {
 
     private List<Book> getFeaturedNewArrivals() {
         List<Book> result = new ArrayList<>();
-        List<String> outstandingTitles = Arrays.asList(
-            "milk and honey", "The Alchemist",
-            "Sherlock Holmes", "The Silent Patient",
-            "The Pragmatic Programmer", "Clean Code",
-            "Zero to One", "The Intelligent Investor",
-            "The Cat in the Hat", "The Very Hungry Caterpillar",
-            "Ego is the Enemy", "Atomic Habits"
-        );
-
-        for (String title : outstandingTitles) {
+        List<String> categories = Arrays.asList("Fiction", "Mystery", "Technology", "Kids", "Self Help", "Business");
+        
+        for (String cat : categories) {
+            List<Book> catBooks = new ArrayList<>();
             for (Book book : allBooks) {
-                if (book.getTitle().equalsIgnoreCase(title)) {
-                    result.add(book);
-                    break;
+                if (book.getCategory().equalsIgnoreCase(cat)) {
+                    catBooks.add(book);
                 }
+            }
+            // Pick the 4th book (index 3) if available, to be unique from the first 3 covers shown on category cards
+            if (catBooks.size() >= 4) {
+                result.add(catBooks.get(3));
+            } else if (!catBooks.isEmpty()) {
+                result.add(catBooks.get(catBooks.size() - 1));
             }
         }
         return result;
@@ -394,11 +441,12 @@ public class DashboardFragment extends Fragment {
 
     private void filterBooks(String query) {
         List<Book> filtered = new ArrayList<>();
-        List<Book> sourceList = getFeaturedNewArrivals();
-        for (Book book : sourceList) {
-            if (book.getTitle().toLowerCase().contains(query.toLowerCase()) || 
-                book.getAuthor().toLowerCase().contains(query.toLowerCase())) {
-                filtered.add(book);
+        if (fullNewArrivalsList != null) {
+            for (Book book : fullNewArrivalsList) {
+                if (book.getTitle().toLowerCase().contains(query.toLowerCase()) || 
+                    book.getAuthor().toLowerCase().contains(query.toLowerCase())) {
+                    filtered.add(book);
+                }
             }
         }
         newArrivalsList.clear();
@@ -406,6 +454,8 @@ public class DashboardFragment extends Fragment {
         newArrivalsAdapter.notifyDataSetChanged();
         
         if (!query.isEmpty()) {
+            newArrivalsCover.setVisibility(View.GONE);
+            rvNewArrivals.setVisibility(View.VISIBLE);
             onBackPressedCallback.setEnabled(true);
         } else {
             collapseAllSections();
@@ -414,11 +464,27 @@ public class DashboardFragment extends Fragment {
 
     private void setupNewArrivals() {
         rvNewArrivals.setLayoutManager(new LinearLayoutManager(getContext()));
+        fullNewArrivalsList = getFeaturedNewArrivals();
+        
+        // Correctly set the overlapping book covers on the cover card fanned stack
+        if (fullNewArrivalsList.size() >= 6) {
+            ((ImageView) newArrivalsCover.findViewById(R.id.ivCover1)).setImageResource(fullNewArrivalsList.get(0).getCoverImageRes());
+            ((ImageView) newArrivalsCover.findViewById(R.id.ivCover2)).setImageResource(fullNewArrivalsList.get(1).getCoverImageRes());
+            ((ImageView) newArrivalsCover.findViewById(R.id.ivCover3)).setImageResource(fullNewArrivalsList.get(2).getCoverImageRes());
+            ((ImageView) newArrivalsCover.findViewById(R.id.ivCover4)).setImageResource(fullNewArrivalsList.get(3).getCoverImageRes());
+            ((ImageView) newArrivalsCover.findViewById(R.id.ivCover5)).setImageResource(fullNewArrivalsList.get(4).getCoverImageRes());
+            ((ImageView) newArrivalsCover.findViewById(R.id.ivCover6)).setImageResource(fullNewArrivalsList.get(5).getCoverImageRes());
+        }
+        
+        newArrivalsCover.findViewById(R.id.btnViewAll).setOnClickListener(v -> expandNewArrivalsSection());
+        newArrivalsCover.setOnClickListener(v -> expandNewArrivalsSection());
+
         newArrivalsList = new ArrayList<>();
-        newArrivalsList.addAll(getFeaturedNewArrivals());
+        // Initially rvNewArrivals is GONE, so list content doesn't matter until expanded
         newArrivalsAdapter = new BookAdapter(newArrivalsList, this::openBookDetail);
         rvNewArrivals.setAdapter(newArrivalsAdapter);
         rvNewArrivals.setNestedScrollingEnabled(false);
+        rvNewArrivals.setVisibility(View.GONE);
     }
 
     private void openBookDetail(Book book) {
@@ -450,7 +516,6 @@ public class DashboardFragment extends Fragment {
     public void onResume() {
         super.onResume();
         loadSavedProfileImage();
-        slideHandler.removeCallbacks(sliderRunnable);
         slideHandler.postDelayed(sliderRunnable, SLIDE_DELAY);
     }
 

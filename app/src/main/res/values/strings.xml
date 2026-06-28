@@ -5,4 +5,9 @@
     <string name="greeting_format">Hello, %1$s 👋</string>
     <string name="logout_message">Logging out&#8230;</string>
     <string name="profile_updated">Profile picture updated</string>
+
+    <!-- Splash/Startup Strings -->
+    <string name="splash_title">MyBookCatalog</string>
+    <string name="splash_tagline">Explore • Discover • Read</string>
+    <string name="content_desc_book_cover">Book Cover Preview</string>
 </resources>

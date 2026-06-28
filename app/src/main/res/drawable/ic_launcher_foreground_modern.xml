@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Centered Logo for App Icon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,30L38,30C35.8,30 34,31.8 34,34V66C34,68.2 35.8,70 38,70L70,70C72.2,70 74,68.2 74,66V34C74,31.8 72.2,30 70,30ZM70,66L38,66V34L42,34V50L47,47L52,50V34L70,34V66Z" />
+    <path
+        android:fillColor="@color/logo_accent"
+        android:pathData="M62,42m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+</vector>
